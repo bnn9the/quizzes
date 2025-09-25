@@ -1,0 +1,628 @@
+{
+	"info": {
+		"_postman_id": "course-platform-api",
+		"name": "Course Platform API",
+		"description": "API collection for Course Management Platform with Quiz functionality",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"teacher@example.com\",\n    \"password\": \"password123\",\n    \"fullName\": \"John Teacher\",\n    \"role\": \"TEACHER\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					}
+				},
+				{
+					"name": "Register Student",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student@example.com\",\n    \"password\": \"password123\",\n    \"fullName\": \"Jane Student\",\n    \"role\": \"STUDENT\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					}
+				},
+				{
+					"name": "Login Teacher",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('teacherToken', response.accessToken);",
+									"    pm.environment.set('teacherId', response.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"teacher@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Login Student",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('studentToken', response.accessToken);",
+									"    pm.environment.set('studentId', response.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacherToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"me"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Courses",
+			"item": [
+				{
+					"name": "Create Course",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('courseId', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacherToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Introduction to Spring Boot\",\n    \"description\": \"Learn the fundamentals of Spring Boot framework\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/courses",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"courses"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Courses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{studentToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/courses",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"courses"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Course by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{studentToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/courses/{{courseId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"courses",
+								"{{courseId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Course",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacherToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Advanced Spring Boot\",\n    \"description\": \"Advanced concepts in Spring Boot framework\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/courses/{{courseId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"courses",
+								"{{courseId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get My Courses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacherToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/courses/my",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"courses",
+								"my"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Quizzes",
+			"item": [
+				{
+					"name": "Create Quiz",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('quizId', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacherToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Spring Boot Basics Quiz\",\n    \"description\": \"Test your knowledge of Spring Boot fundamentals\",\n    \"courseId\": {{courseId}},\n    \"maxAttempts\": 3,\n    \"timeLimitMinutes\": 30,\n    \"questions\": [\n        {\n            \"questionText\": \"What is Spring Boot?\",\n            \"questionType\": \"SINGLE_CHOICE\",\n            \"points\": 5,\n            \"orderIndex\": 1,\n            \"answerOptions\": [\n                {\n                    \"optionText\": \"A Java framework\",\n                    \"isCorrect\": true,\n                    \"orderIndex\": 1\n                },\n                {\n                    \"optionText\": \"A database\",\n                    \"isCorrect\": false,\n                    \"orderIndex\": 2\n                },\n                {\n                    \"optionText\": \"A programming language\",\n                    \"isCorrect\": false,\n                    \"orderIndex\": 3\n                }\n            ]\n        },\n        {\n            \"questionText\": \"Which annotations are used in Spring Boot? (Select all that apply)\",\n            \"questionType\": \"MULTIPLE_CHOICE\",\n            \"points\": 10,\n            \"orderIndex\": 2,\n            \"answerOptions\": [\n                {\n                    \"optionText\": \"@SpringBootApplication\",\n                    \"isCorrect\": true,\n                    \"orderIndex\": 1\n                },\n                {\n                    \"optionText\": \"@RestController\",\n                    \"isCorrect\": true,\n                    \"orderIndex\": 2\n                },\n                {\n                    \"optionText\": \"@Component\",\n                    \"isCorrect\": true,\n                    \"orderIndex\": 3\n                },\n                {\n                    \"optionText\": \"@MainClass\",\n                    \"isCorrect\": false,\n                    \"orderIndex\": 4\n                }\n            ]\n        },\n        {\n            \"questionText\": \"Explain the main benefits of using Spring Boot.\",\n            \"questionType\": \"TEXT\",\n            \"points\": 15,\n            \"orderIndex\": 3\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/quizzes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"quizzes"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Quizzes by Course",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{studentToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/quizzes/course/{{courseId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"quizzes",
+								"course",
+								"{{courseId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Quiz by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{studentToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/quizzes/{{quizId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"quizzes",
+								"{{quizId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Start Quiz Attempt",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('attemptId', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{studentToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/quizzes/{{quizId}}/start",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"quizzes",
+								"{{quizId}}",
+								"start"
+							]
+						}
+					}
+				},
+				{
+					"name": "Submit Quiz",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{studentToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quizId\": {{quizId}},\n    \"answers\": [\n        {\n            \"questionId\": 1,\n            \"selectedOptionIds\": [1]\n        },\n        {\n            \"questionId\": 2,\n            \"selectedOptionIds\": [1, 2, 3]\n        },\n        {\n            \"questionId\": 3,\n            \"answerText\": \"Spring Boot provides auto-configuration, embedded servers, production-ready features, and simplified dependency management, making it easier to create standalone Spring applications.\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/quizzes/submit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"quizzes",
+								"submit"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get My Quiz Attempts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{studentToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/quizzes/attempts/my",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"quizzes",
+								"attempts",
+								"my"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Quiz Attempts (Teacher)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacherToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/quizzes/{{quizId}}/attempts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"quizzes",
+								"{{quizId}}",
+								"attempts"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Attempt Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{studentToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/quizzes/attempts/{{attemptId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"quizzes",
+								"attempts",
+								"{{attemptId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Health & Monitoring",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					}
+				},
+				{
+					"name": "Application Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/info",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"info"
+							]
+						}
+					}
+				},
+				{
+					"name": "Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/actuator/metrics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"actuator",
+								"metrics"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		}
+	]
+}
