@@ -1,0 +1,19 @@
+declare module '@mui/icons-material' {
+  export const Menu: any;
+  export const School: any;
+  export const Quiz: any;
+  export const Dashboard: any;
+  export const Person: any;
+  export const ExitToApp: any;
+  export const Book: any;
+  export const Assessment: any;
+  export const Search: any;
+  export const Add: any;
+  export const Edit: any;
+  export const Delete: any;
+  export const Visibility: any;
+  export const TrendingUp: any;
+  export const PlayArrow: any;
+  export const Timer: any;
+  export const Assignment: any;
+}

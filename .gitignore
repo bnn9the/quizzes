@@ -1,0 +1,98 @@
+# Course Platform - Git Ignore
+
+## Backend (Spring Boot / Maven)
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/.env
+backend/application-local.yml
+backend/application-prod.yml
+
+## Frontend (React / Node.js)
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+## IDE Files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+## OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+## Logs
+*.log
+logs/
+/var/log/
+
+## Database
+*.db
+*.sqlite
+*.sqlite3
+
+## Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+## Security
+*.key
+*.pem
+*.p12
+*.jks
+
+## Backup files
+*.bak
+*.backup
+backup/
+backups/
+
+## Docker
+.docker/
+docker-compose.override.yml
+
+## Environment variables
+.env
+.env.*
+!.env.example
+
+## Coverage reports
+coverage/
+*.lcov
+
+## Build artifacts
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+## Package files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
