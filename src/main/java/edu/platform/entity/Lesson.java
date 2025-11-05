@@ -13,29 +13,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "courses")
+@Table(name = "lessons")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Course {
+public class Lesson {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
+    
     @Column(nullable = false)
     private String title;
     
     @Column(columnDefinition = "TEXT")
-    private String description;
+    private String content;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teacher_id", nullable = false)
-    private User teacher;
+    @Column(name = "order_index", nullable = false)
+    private Integer orderIndex;
     
     // Optimistic locking
     @Version
+    @Column(nullable = false)
     private Long version;
     
     @CreationTimestamp
@@ -46,24 +50,13 @@ public class Course {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
-    // Relationships
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Quiz> quizzes = new ArrayList<>();
-    
-    // NEW: Lessons relationship
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @OrderBy("orderIndex ASC")
-    @Builder.Default
-    private List<Lesson> lessons = new ArrayList<>();
-    
-    // NEW: Cover images relationship
+    // Many-to-many relationship with MediaAsset for embedded images
     @ManyToMany
     @JoinTable(
-        name = "course_media_assets",
-        joinColumns = @JoinColumn(name = "course_id"),
+        name = "lesson_media_assets",
+        joinColumns = @JoinColumn(name = "lesson_id"),
         inverseJoinColumns = @JoinColumn(name = "media_asset_id")
     )
     @Builder.Default
-    private List<MediaAsset> coverImages = new ArrayList<>();
+    private List<MediaAsset> mediaAssets = new ArrayList<>();
 }

@@ -21,5 +21,7 @@ public interface CourseMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "quizzes", ignore = true)
+    @Mapping(target = "lessons", ignore = true)
+    @Mapping(target = "coverImages", ignore = true)
     Course toEntity(CourseRequest request);
 }

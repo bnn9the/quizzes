@@ -29,9 +29,61 @@ spring:
     jwt:
       secret: mySecretKey123456789012345678901234567890
       expiration: 86400000 # 24 hours in milliseconds
+  
+  # Spring MVC async timeout
+  mvc:
+    async:
+      request-timeout: 30000 # 30 seconds
 
 server:
   port: 8080
+
+# File Storage Configuration
+file:
+  storage:
+    location: uploads
+
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - java.io.IOException
+          - java.nio.file.FileSystemException
+    instances:
+      fileStorage:
+        baseConfig: default
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        slowCallRateThreshold: 100
+        slowCallDurationThreshold: 5s
+  
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.io.IOException
+          - java.nio.file.FileSystemException
+    instances:
+      fileStorage:
+        baseConfig: default
+        maxAttempts: 3
+        waitDuration: 1s
+        exponentialBackoffMultiplier: 2
 
 logging:
   level:
@@ -46,10 +98,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,circuitbreakers,retries
   endpoint:
     health:
       show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
   info:
     env:
       enabled: true
@@ -58,7 +113,7 @@ info:
   app:
     name: Course Management Platform
     description: Platform for managing courses and quizzes
-    version: 1.0.0
+    version: 2.0.0
 
 springdoc:
   api-docs:
