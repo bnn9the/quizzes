@@ -1,7 +1,7 @@
 spring:
   application:
     name: course-platform
-  
+
   datasource:
     url: jdbc:postgresql://localhost:5433/course_platform?useUnicode=true&characterEncoding=UTF-8
     username: postgres
@@ -9,7 +9,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-test-query: SELECT 1
-  
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -19,31 +19,54 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     open-in-view: false
-  
+
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-  
+
   security:
     jwt:
       secret: mySecretKey123456789012345678901234567890
       expiration: 86400000 # 24 hours in milliseconds
-  
-  # Spring MVC async timeout
+
   mvc:
     async:
-      request-timeout: 30000 # 30 seconds
+      request-timeout: 30000
 
 server:
   port: 8080
 
+# ============================================================================
+# ACTUATOR CONFIGURATION - ADD THIS SECTION
+# ============================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers,circuitbreakerevents,retries,retryevents
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+    db:
+      enabled: true
+
+# ============================================================================
 # File Storage Configuration
+# ============================================================================
 file:
   storage:
     location: uploads
 
+# ============================================================================
 # Resilience4j Configuration
+# ============================================================================
 resilience4j:
   circuitbreaker:
     configs:
@@ -56,9 +79,6 @@ resilience4j:
         waitDurationInOpenState: 10s
         failureRateThreshold: 50
         eventConsumerBufferSize: 10
-        recordExceptions:
-          - java.io.IOException
-          - java.nio.file.FileSystemException
     instances:
       fileStorage:
         baseConfig: default
@@ -67,7 +87,23 @@ resilience4j:
         waitDurationInOpenState: 10s
         slowCallRateThreshold: 100
         slowCallDurationThreshold: 5s
-  
+        recordExceptions:
+          - java.io.IOException
+          - java.nio.file.FileSystemException
+
+      testResultCalculation:
+        baseConfig: default
+        slidingWindowSize: 20
+        failureRateThreshold: 60
+        waitDurationInOpenState: 30s
+        slowCallRateThreshold: 80
+        slowCallDurationThreshold: 10s
+        recordExceptions:
+          - java.lang.Exception
+        ignoreExceptions:
+          - edu.platform.exception.ResourceNotFoundException
+          - java.lang.IllegalArgumentException
+
   retry:
     configs:
       default:
@@ -75,49 +111,39 @@ resilience4j:
         waitDuration: 500ms
         enableExponentialBackoff: true
         exponentialBackoffMultiplier: 2
-        retryExceptions:
-          - java.io.IOException
-          - java.nio.file.FileSystemException
     instances:
       fileStorage:
         baseConfig: default
         maxAttempts: 3
         waitDuration: 1s
         exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.io.IOException
+          - java.nio.file.FileSystemException
 
-logging:
-  level:
-    root: INFO
-    edu.platform: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+      testResultCalculation:
+        baseConfig: default
+        maxAttempts: 2
+        waitDuration: 2s
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.sql.SQLException
+          - org.springframework.dao.DataAccessException
+        ignoreExceptions:
+          - edu.platform.exception.ResourceNotFoundException
+          - java.lang.IllegalArgumentException
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,circuitbreakers,retries
-  endpoint:
-    health:
-      show-details: always
-  health:
-    circuitbreakers:
-      enabled: true
-  info:
-    env:
-      enabled: true
+  timelimiter:
+    instances:
+      testResultCalculation:
+        timeoutDuration: 15s
+        cancelRunningFuture: true
 
-info:
-  app:
-    name: Course Management Platform
-    description: Platform for managing courses and quizzes
-    version: 2.0.0
-
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    operationsSorter: method
+# ============================================================================
+# Test Result Processing Configuration
+# ============================================================================
+test-result:
+  processing:
+    timeout-minutes: 30
+    cleanup-cron: "0 */15 * * * *"
+    passing-score-default: 70.0
