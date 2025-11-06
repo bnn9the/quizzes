@@ -34,7 +34,7 @@ public class TestResultCalculationService {
     private final StudentAnswerRepository studentAnswerRepository;
     private final QuestionRepository questionRepository;
     private final TestResultRepository testResultRepository;
-
+    
     /**
      * Calculate test result with circuit breaker and retry protection.
      * If calculation fails, the error won't block the quiz system.
