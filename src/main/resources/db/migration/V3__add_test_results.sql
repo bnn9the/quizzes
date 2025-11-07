@@ -3,8 +3,8 @@ CREATE TABLE test_results (
     quiz_attempt_id BIGINT NOT NULL UNIQUE,
     student_id BIGINT NOT NULL,
     quiz_id BIGINT NOT NULL,
-    score DECIMAL(5,2) NOT NULL,
-    max_score DECIMAL(5,2) NOT NULL,
+    score DECIMAL(10,2) NOT NULL,
+    max_score DECIMAL(10,2) NOT NULL,
     percentage DECIMAL(5,2) NOT NULL,
     passing_score DECIMAL(5,2),
     status VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS',
@@ -35,3 +35,5 @@ COMMENT ON COLUMN test_results.status IS 'Status: PASSED, FAILED, IN_PROGRESS, T
 COMMENT ON COLUMN test_results.time_spent_seconds IS 'Time spent on test in seconds';
 COMMENT ON COLUMN test_results.calculation_time_ms IS 'Time taken to calculate result in milliseconds';
 COMMENT ON COLUMN test_results.passing_score IS 'Minimum percentage required to pass (e.g., 70.00 for 70%)';
+COMMENT ON COLUMN test_results.score IS 'Student achieved score (max 99,999,999.99)';
+COMMENT ON COLUMN test_results.max_score IS 'Maximum possible score (max 99,999,999.99)';
