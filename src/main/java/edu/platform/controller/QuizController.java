@@ -5,6 +5,7 @@ import edu.platform.dto.request.QuizSubmissionRequest;
 import edu.platform.dto.response.QuizAttemptResponse;
 import edu.platform.dto.response.QuizResponse;
 import edu.platform.entity.User;
+import edu.platform.service.CourseVisitService;
 import edu.platform.service.QuizAttemptService;
 import edu.platform.service.QuizService;
 import edu.platform.service.UserService;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,7 @@ public class QuizController {
     
     private final QuizService quizService;
     private final QuizAttemptService quizAttemptService;
+    private final CourseVisitService courseVisitService;
     private final UserService userService;
     
     @PostMapping
@@ -82,10 +85,12 @@ public class QuizController {
         @ApiResponse(responseCode = "404", description = "Quiz not found")
     })
     public ResponseEntity<QuizResponse> getQuizById(
-            @Parameter(description = "Quiz ID") @PathVariable Long id) {
+            @Parameter(description = "Quiz ID") @PathVariable Long id,
+            HttpServletRequest request) {
         log.debug("Getting quiz by ID: {}", id);
         
         QuizResponse quiz = quizService.getQuizById(id);
+        recordQuizView(quiz, request);
         return ResponseEntity.ok(quiz);
     }
     
@@ -246,5 +251,25 @@ public class QuizController {
         
         QuizAttemptResponse attempt = quizAttemptService.getAttemptById(attemptId);
         return ResponseEntity.ok(attempt);
+    }
+
+    private void recordQuizView(QuizResponse quiz, HttpServletRequest request) {
+        if (quiz == null || quiz.getCourse() == null) {
+            return;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return;
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal == null || "anonymousUser".equals(principal)) {
+            return;
+        }
+        try {
+            Long userId = userService.getCurrentUserEntity(authentication.getName()).getId();
+            courseVisitService.recordQuizView(userId, quiz.getCourse().getId(), quiz.getId(), request);
+        } catch (Exception ex) {
+            log.debug("Failed to record quiz view {}", quiz.getId(), ex);
+        }
     }
 }

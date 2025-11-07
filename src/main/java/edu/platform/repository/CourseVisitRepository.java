@@ -3,6 +3,7 @@ package edu.platform.repository;
 import edu.platform.entity.CourseVisit;
 import edu.platform.entity.enums.VisitType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -27,6 +28,14 @@ public interface CourseVisitRepository extends JpaRepository<CourseVisit, Long> 
      * Find visits by user and course
      */
     List<CourseVisit> findByUserIdAndCourseIdOrderByVisitedAtDesc(Long userId, Long courseId);
+    
+    @Query("SELECT cv FROM CourseVisit cv " +
+           "WHERE cv.user.id = :userId " +
+           "AND cv.visitedAt BETWEEN :startDate AND :endDate " +
+           "ORDER BY cv.visitedAt DESC")
+    List<CourseVisit> findByUserIdAndDateRange(@Param("userId") Long userId,
+                                               @Param("startDate") LocalDateTime startDate,
+                                               @Param("endDate") LocalDateTime endDate);
     
     /**
      * Find visits in date range
@@ -123,6 +132,7 @@ public interface CourseVisitRepository extends JpaRepository<CourseVisit, Long> 
     /**
      * Delete old visits (for data retention)
      */
+    @Modifying
     @Query("DELETE FROM CourseVisit cv WHERE cv.visitedAt < :cutoffDate")
     void deleteOlderThan(@Param("cutoffDate") LocalDateTime cutoffDate);
 }

@@ -4,6 +4,7 @@ import edu.platform.dto.request.CourseRequest;
 import edu.platform.dto.response.CourseResponse;
 import edu.platform.entity.User;
 import edu.platform.service.CourseService;
+import edu.platform.service.CourseVisitService;
 import edu.platform.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,7 @@ public class CourseController {
     
     private final CourseService courseService;
     private final UserService userService;
+    private final CourseVisitService courseVisitService;
     
     @PostMapping
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
@@ -77,10 +80,12 @@ public class CourseController {
         @ApiResponse(responseCode = "404", description = "Course not found")
     })
     public ResponseEntity<CourseResponse> getCourseById(
-            @Parameter(description = "Course ID") @PathVariable Long id) {
+            @Parameter(description = "Course ID") @PathVariable Long id,
+            HttpServletRequest request) {
         log.debug("Getting course by ID: {}", id);
         
         CourseResponse course = courseService.getCourseById(id);
+        recordCourseView(id, request);
         return ResponseEntity.ok(course);
     }
     
@@ -158,5 +163,22 @@ public class CourseController {
         
         List<CourseResponse> courses = courseService.searchCoursesByTitle(q);
         return ResponseEntity.ok(courses);
+    }
+
+    private void recordCourseView(Long courseId, HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return;
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal == null || "anonymousUser".equals(principal)) {
+            return;
+        }
+        try {
+            Long userId = userService.getCurrentUserEntity(authentication.getName()).getId();
+            courseVisitService.recordCourseView(userId, courseId, request);
+        } catch (Exception ex) {
+            log.debug("Failed to record course visit for course {}", courseId, ex);
+        }
     }
 }

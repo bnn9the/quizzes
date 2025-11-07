@@ -2,6 +2,7 @@ package edu.platform.controller;
 
 import edu.platform.dto.request.LessonRequest;
 import edu.platform.dto.response.LessonResponse;
+import edu.platform.service.CourseVisitService;
 import edu.platform.service.LessonService;
 import edu.platform.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ public class LessonController {
     
     private final LessonService lessonService;
     private final UserService userService;
+    private final CourseVisitService courseVisitService;
     
     @PostMapping
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
@@ -64,11 +67,13 @@ public class LessonController {
         @ApiResponse(responseCode = "404", description = "Lesson not found")
     })
     public ResponseEntity<LessonResponse> getLessonById(
-            @Parameter(description = "Lesson ID") @PathVariable Long id) {
+            @Parameter(description = "Lesson ID") @PathVariable Long id,
+            HttpServletRequest request) {
         
         log.debug("Getting lesson by ID: {}", id);
         
         LessonResponse lesson = lessonService.getLessonById(id);
+        recordLessonView(lesson, request);
         return ResponseEntity.ok(lesson);
     }
     
@@ -191,5 +196,25 @@ public class LessonController {
         
         LessonResponse lesson = lessonService.detachMediaFromLesson(lessonId, mediaAssetId, teacherId);
         return ResponseEntity.ok(lesson);
+    }
+
+    private void recordLessonView(LessonResponse lesson, HttpServletRequest request) {
+        if (lesson == null) {
+            return;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return;
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal == null || "anonymousUser".equals(principal)) {
+            return;
+        }
+        try {
+            Long userId = userService.getCurrentUserEntity(authentication.getName()).getId();
+            courseVisitService.recordLessonView(userId, lesson.getCourseId(), lesson.getId(), request);
+        } catch (Exception ex) {
+            log.debug("Failed to record lesson visit for lesson {}", lesson.getId(), ex);
+        }
     }
 }

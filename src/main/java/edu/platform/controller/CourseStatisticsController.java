@@ -1,7 +1,12 @@
 package edu.platform.controller;
 
+import edu.platform.dto.request.CourseVisitRequest;
 import edu.platform.dto.response.CourseStatisticsResponse;
+import edu.platform.dto.response.CourseVisitResponse;
+import edu.platform.entity.enums.VisitType;
+import edu.platform.mapper.CourseVisitMapper;
 import edu.platform.repository.CourseVisitRepository;
+import edu.platform.service.CourseVisitService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +30,7 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/statistics")
@@ -34,6 +41,8 @@ import java.util.Map;
 public class CourseStatisticsController {
     
     private final CourseVisitRepository courseVisitRepository;
+    private final CourseVisitService courseVisitService;
+    private final CourseVisitMapper courseVisitMapper;
     private final JdbcTemplate jdbcTemplate;
     
     /**
@@ -57,6 +66,13 @@ public class CourseStatisticsController {
         Long uniqueVisitors = courseVisitRepository.countUniqueVisitorsByCourseId(courseId);
         Long totalDuration = courseVisitRepository.getTotalDurationByCourseId(courseId);
         Double avgDuration = courseVisitRepository.getAverageDurationByCourseId(courseId);
+        Long lessonViews = courseVisitRepository.countByCourseIdAndVisitType(courseId, VisitType.LESSON_VIEW);
+        Long quizStarts = courseVisitRepository.countByCourseIdAndVisitType(courseId, VisitType.QUIZ_START);
+        Long quizCompletions = courseVisitRepository.countByCourseIdAndVisitType(courseId, VisitType.QUIZ_COMPLETE);
+        Long quizAttempts = courseVisitRepository.countByCourseIdAndVisitType(courseId, VisitType.QUIZ_VIEW);
+        Double completionRate = (quizStarts != null && quizStarts > 0 && quizCompletions != null)
+                ? (quizCompletions.doubleValue() / quizStarts.doubleValue()) * 100
+                : 0.0;
         
         CourseStatisticsResponse response = CourseStatisticsResponse.builder()
                 .courseId(courseId)
@@ -64,6 +80,9 @@ public class CourseStatisticsController {
                 .uniqueVisitors(uniqueVisitors)
                 .totalDurationSeconds(totalDuration)
                 .averageDurationSeconds(avgDuration != null ? avgDuration.intValue() : 0)
+                .lessonViews(lessonViews != null ? lessonViews : 0)
+                .quizAttempts(quizAttempts != null ? quizAttempts : 0)
+                .completionRate(completionRate)
                 .build();
         
         return ResponseEntity.ok(response);
@@ -275,5 +294,63 @@ public class CourseStatisticsController {
         List<Map<String, Object>> devices = jdbcTemplate.queryForList(sql, courseId);
         
         return ResponseEntity.ok(devices);
+    }
+
+    /**
+     * Manual creation endpoint for course visits.
+     */
+    @PostMapping("/visits")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create visit record", description = "Create a course visit record manually (ADMIN only)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Visit created successfully",
+                content = @Content(schema = @Schema(implementation = CourseVisitResponse.class)))
+    })
+    public ResponseEntity<CourseVisitResponse> createVisit(@Valid @RequestBody CourseVisitRequest request) {
+        var visit = courseVisitService.createVisit(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(courseVisitMapper.toResponse(visit));
+    }
+
+    /**
+     * Get raw visit log for a course.
+     */
+    @GetMapping("/courses/{courseId}/visits")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "Get course visits", description = "Get visit log for a course with optional date range")
+    public ResponseEntity<List<CourseVisitResponse>> getCourseVisits(
+            @Parameter(description = "Course ID") @PathVariable Long courseId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+
+        LocalDateTime[] range = normalizeRange(startDate, endDate);
+        var visits = courseVisitService.getCourseVisits(courseId, range[0], range[1]);
+        return ResponseEntity.ok(courseVisitMapper.toResponseList(visits));
+    }
+
+    /**
+     * Get raw visit log for a user.
+     */
+    @GetMapping("/users/{userId}/visits")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    @Operation(summary = "Get user visits", description = "Get activity log for a specific user")
+    public ResponseEntity<List<CourseVisitResponse>> getUserVisits(
+            @Parameter(description = "User ID") @PathVariable Long userId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+
+        LocalDateTime[] range = normalizeRange(startDate, endDate);
+        var visits = courseVisitService.getUserVisits(userId, range[0], range[1]);
+        return ResponseEntity.ok(courseVisitMapper.toResponseList(visits));
+    }
+
+    private LocalDateTime[] normalizeRange(LocalDateTime start, LocalDateTime end) {
+        LocalDateTime normalizedStart = start;
+        LocalDateTime normalizedEnd = end;
+        if (normalizedStart != null && normalizedEnd == null) {
+            normalizedEnd = LocalDateTime.now();
+        } else if (normalizedStart == null && normalizedEnd != null) {
+            normalizedStart = normalizedEnd.minusDays(30);
+        }
+        return new LocalDateTime[]{normalizedStart, normalizedEnd};
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ public class QuizAttemptService {
     private final AnswerOptionRepository answerOptionRepository;
     private final StudentAnswerRepository studentAnswerRepository;
     private final QuizAttemptMapper quizAttemptMapper;
+    private final CourseVisitService courseVisitService;
     
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public QuizAttemptResponse startQuizAttempt(Long quizId, Long studentId) {
@@ -72,6 +74,7 @@ public class QuizAttemptService {
                 .build();
         
         QuizAttempt savedAttempt = quizAttemptRepository.save(attempt);
+        courseVisitService.recordQuizStart(studentId, quiz.getCourse().getId(), quizId, null);
         log.info("Quiz attempt started successfully with ID: {}", savedAttempt.getId());
         
         return quizAttemptMapper.toResponse(savedAttempt);
@@ -129,6 +132,21 @@ public class QuizAttemptService {
         attempt.setIsCompleted(true);
         
         QuizAttempt savedAttempt = quizAttemptRepository.save(attempt);
+        Integer durationSeconds = null;
+        if (attempt.getStartedAt() != null && attempt.getCompletedAt() != null) {
+            durationSeconds = Math.toIntExact(Duration.between(
+                    attempt.getStartedAt(), attempt.getCompletedAt()).getSeconds());
+            if (durationSeconds < 0) {
+                durationSeconds = 0;
+            }
+        }
+        courseVisitService.recordQuizCompletion(
+                studentId,
+                attempt.getQuiz().getCourse().getId(),
+                attempt.getQuiz().getId(),
+                durationSeconds,
+                null
+        );
         log.info("Quiz attempt submitted successfully with ID: {}, Score: {}/{}", 
                 savedAttempt.getId(), totalScore, maxPossibleScore);
         
