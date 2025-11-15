@@ -1,14 +1,10 @@
--- Create ENUM types
-CREATE TYPE user_role AS ENUM ('STUDENT', 'TEACHER', 'ADMIN');
-CREATE TYPE question_type AS ENUM ('SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TEXT');
-
 -- Create users table
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
-    role user_role NOT NULL DEFAULT 'STUDENT',
+    role VARCHAR(20) NOT NULL DEFAULT 'STUDENT',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -44,7 +40,7 @@ CREATE TABLE questions (
     id BIGSERIAL PRIMARY KEY,
     quiz_id BIGINT NOT NULL,
     question_text TEXT NOT NULL,
-    question_type question_type NOT NULL DEFAULT 'SINGLE_CHOICE',
+    question_type VARCHAR(20) NOT NULL DEFAULT 'SINGLE_CHOICE',
     points INTEGER NOT NULL DEFAULT 1,
     order_index INTEGER NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
