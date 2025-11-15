@@ -3,9 +3,9 @@ spring:
     name: course-platform
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/course_platform?useUnicode=true&characterEncoding=UTF-8
+    url: jdbc:postgresql://localhost:5432/Psuti_test?useUnicode=true&characterEncoding=UTF-8
     username: postgres
-    password: password
+    password: 123
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-test-query: SELECT 1
@@ -101,7 +101,7 @@ resilience4j:
         recordExceptions:
           - java.lang.Exception
         ignoreExceptions:
-          - edu.platform.exception.ResourceNotFoundException
+          - edu.platform.common.exception.ResourceNotFoundException
           - java.lang.IllegalArgumentException
 
   retry:
@@ -130,7 +130,7 @@ resilience4j:
           - java.sql.SQLException
           - org.springframework.dao.DataAccessException
         ignoreExceptions:
-          - edu.platform.exception.ResourceNotFoundException
+          - edu.platform.common.exception.ResourceNotFoundException
           - java.lang.IllegalArgumentException
 
   timelimiter:
@@ -145,5 +145,5 @@ resilience4j:
 test-result:
   processing:
     timeout-minutes: 30
-    cleanup-cron: "0 */15 * * * *"
+    cleanup-cron: '0 */15 * * * *'
     passing-score-default: 70.0
